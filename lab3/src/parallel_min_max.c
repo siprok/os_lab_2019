@@ -98,6 +98,8 @@ int main(int argc, char **argv) {
   int active_child_processes = 0;
   int array_step = array_size / pnum;
   int last_step = array_size % pnum;
+  if(last_step == 0) last_step = array_step;
+  else array_step++;
   int pipe_fd[2];
   if(!with_files)
   {
@@ -108,15 +110,15 @@ int main(int argc, char **argv) {
   
   for (int i = 0; i < pnum; i++) {
     pid_t child_pid = fork();
+    int local_step = i < pnum - 1 ? array_step : last_step;
     if (child_pid >= 0) {
       // successful fork
       active_child_processes += 1;
       if (child_pid == 0) {
         // child process
-	int local_step = i < pnum - 1 ? array_step : last_step;
         struct MinMax *min_max = malloc(sizeof(struct MinMax)); 
-	min_max[0] = GetMinMax(array, i * array_step, i * array_size + local_step);
-	printf("Find %d and %d\n", min_max[0].min, min_max[0].max);
+        min_max[0] = GetMinMax(array, i * array_step, i * array_step + local_step);
+	//printf("Find %d and %d\n", min_max[0].min, min_max[0].max);
         if (with_files) 
  	{
 	  char path[10];
