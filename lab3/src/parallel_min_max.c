@@ -96,12 +96,16 @@ int main(int argc, char **argv) {
   int *array = malloc(sizeof(int) * array_size);
   GenerateArray(array, array_size, seed);
   int active_child_processes = 0;
-
+  int array_step = array_size / pnum;
+  int last_step = array_size % pnum;
+  int pipe_fd[2];
+  if(!with_files)
+  {
+    pipe(pipe_fd);
+  }
   struct timeval start_time;
   gettimeofday(&start_time, NULL);
   
-  int array_step = array_size / pnum;
-  int last_step = array_size % pnum;
   for (int i = 0; i < pnum; i++) {
     pid_t child_pid = fork();
     if (child_pid >= 0) {
@@ -109,8 +113,6 @@ int main(int argc, char **argv) {
       active_child_processes += 1;
       if (child_pid == 0) {
         // child process
-
-        // parallel somehow
 	int local_step = i < pnum - 1 ? array_step : last_step;
         struct MinMax *min_max = malloc(sizeof(struct MinMax)); 
 	min_max[0] = GetMinMax(array, i * array_step, i * array_size + local_step);
@@ -135,10 +137,13 @@ int main(int argc, char **argv) {
 	 else
 	 {
           // use pipe here
+	  write(pipe_fd[1], min_max, sizeof(struct MinMax));
         }
 	free(min_max);
         return 0;
       }
+
+     if(!with_files) close(pipe_fd[1]);
 
     } else {
       printf("Fork failed!\n");
@@ -180,6 +185,7 @@ int main(int argc, char **argv) {
     else
     {
       // read from pipes
+      read(pipe_fd[0], min_max, sizeof(struct MinMax));
     }
     if (min > min_max[0].min) min = min_max[0].min;
     if (max < min_max[0].max) max = min_max[0].max;
@@ -193,6 +199,7 @@ int main(int argc, char **argv) {
 
   free(array);
   free(min_max);
+  if(!with_files)  close(pipe_fd[0]);
   printf("Min: %d\n", min);
   printf("Max: %d\n", max);
   printf("Elapsed time: %fms\n", elapsed_time);
