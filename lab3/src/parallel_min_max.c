@@ -40,18 +40,26 @@ int main(int argc, char **argv) {
         switch (option_index) {
           case 0:
             seed = atoi(optarg);
-            // your code here
-            // error handling
+             {
+                printf("seed is a positive number\n");
+                return 1;
+            }
             break;
           case 1:
             array_size = atoi(optarg);
-            // your code here
-            // error handling
+            if (array_size <= 0)
+            {
+                printf("array_size is a positive number\n");
+                return 1;
+            }
             break;
           case 2:
             pnum = atoi(optarg);
-            // your code here
-            // error handling
+            if (pnum <= 0)
+            {
+                printf("pnum is a positive number\n");
+                return 1;
+            }
             break;
           case 3:
             with_files = true;
@@ -90,7 +98,9 @@ int main(int argc, char **argv) {
 
   struct timeval start_time;
   gettimeofday(&start_time, NULL);
-
+  
+  int array_step = array_size / pnum;
+  int last_step = array_size % pnum;
   for (int i = 0; i < pnum; i++) {
     pid_t child_pid = fork();
     if (child_pid >= 0) {
@@ -100,10 +110,26 @@ int main(int argc, char **argv) {
         // child process
 
         // parallel somehow
-
-        if (with_files) {
-          // use files here
-        } else {
+	int local_step = i < pnum - 1 ? array_step : last_step;
+        struct MinMax min_max = find_min_max(array, i * array_step, i * array_size + local_step);
+        if (with_files) 
+ 	{
+	  const char[10] path;
+	  sprintf(path, "%d.bin",i);
+	  FILE *minmax_file;
+	  if((minmax_file = fopen(path, "wb")) == NULL)
+ 	  {
+   	    printf("ERROR openning for adding to  minmax file");
+ 	  }
+	  if((size_t check = fwrite(&(min_max),sizeof(MinMax),1, minmax_file) != 1)
+	  {
+	    printf("ERROR write minmax struct to file");
+	    return 1;
+	  }
+	  fclose(minmax_file);
+ 	}
+	 else
+	 {
           // use pipe here
         }
         return 0;
@@ -117,26 +143,40 @@ int main(int argc, char **argv) {
 
   while (active_child_processes > 0) {
     // your code here
-
+    wait();
     active_child_processes -= 1;
   }
 
   struct MinMax min_max;
-  min_max.min = INT_MAX;
-  min_max.max = INT_MIN;
-
+  int min = INT_MAX;
+  int max = INT_MIN;
+  const char[10] filepith;
+  sprintf(filepath, "%d.bin",i);
+  FILE* minmax_file;
   for (int i = 0; i < pnum; i++) {
-    int min = INT_MAX;
-    int max = INT_MIN;
-
-    if (with_files) {
+    if (with_files)
+    {
       // read from files
-    } else {
+      
+      if((minmax_file = fopen(filepath, "wb")) == NULL)
+          {
+            printf("ERROR openning for adding to  minmax file");
+          }
+      if((size_t = fread(min_max, sizeof(MinMax), 1) != 1)
+     {
+	 printf("ERROR reading from file");
+	 return 1;
+     }	
+      fclose(minmax_file);
+      remove(filepath);
+    }
+    else
+    {
       // read from pipes
     }
 
-    if (min < min_max.min) min_max.min = min;
-    if (max > min_max.max) min_max.max = max;
+    if (min > min_max.min) min = min_max.min;
+    if (max < min_max.max) max = min_max.max;
   }
 
   struct timeval finish_time;
@@ -146,9 +186,8 @@ int main(int argc, char **argv) {
   elapsed_time += (finish_time.tv_usec - start_time.tv_usec) / 1000.0;
 
   free(array);
-
-  printf("Min: %d\n", min_max.min);
-  printf("Max: %d\n", min_max.max);
+  printf("Min: %d\n", min);
+  printf("Max: %d\n", max);
   printf("Elapsed time: %fms\n", elapsed_time);
   fflush(NULL);
   return 0;
