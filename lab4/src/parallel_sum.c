@@ -126,9 +126,9 @@ int main(int argc, char **argv) {
   for (uint32_t i = 0; i < threads_num; i++) 
   {
     local_step[i]  = i < threads_num - 1 ? array_step : last_step;
-    (args[i]).array = array;
-    (args[i]).begin = i * array_step;
-    (args[i]).end =  i * array_step + local_step;
+    args[i].array = array;
+    args[i].begin = i * array_step;
+    args[i].end =  i * array_step + local_step;
     if (pthread_create(&threads[i], NULL, ThreadSum, (void *)&args[i]))
     {
       printf("Error: pthread_create failed!\n");
