@@ -68,15 +68,25 @@ int main(int argc, char **argv) {
     case 0: {
       switch (option_index) {
       case 0:
-        ConvertStringToUI64(optarg, &k);
-        // TODO: your code here
+        if(!ConvertStringToUI64(optarg, &k))
+	{
+	  fprintf("k must be natural number\n");
+	  return 1;
+	}
         break;
       case 1:
-        ConvertStringToUI64(optarg, &mod);
-        // TODO: your code here
+        if(!ConvertStringToUI64(optarg, &mod) || mod < 1)
+	{
+	  fprintf("mod must be natural number\n");
+	  return 1;
+	}
         break;
       case 2:
-        // TODO: your code here
+	if(strlen(optarg) == 0)
+	{
+	  fprintf("empty path");
+	  return 1;
+	}
         memcpy(servers, optarg, strlen(optarg));
         break;
       default:
@@ -104,6 +114,37 @@ int main(int argc, char **argv) {
   // TODO: delete this and parallel work between servers
   to[0].port = 20001;
   memcpy(to[0].ip, "127.0.0.1", sizeof("127.0.0.1"));
+
+
+  string buf_str;
+  FILE *servers_file = fopen(servers, "r");
+  if(servers_file == NULL)
+  {
+    fprintf("failed open file");
+    return 1;
+  }
+  unsigned int servers_num = 0;
+  
+  // computing number of servers
+  while(!feof(servers_file))
+  {
+    servers_num++;
+  }
+  fseek(servers_file, 0, SEEK_SET);
+  
+  struct Server *to= malloc(sizeof(struct Server) * servers_num);
+  
+  // reading serveres addresses from file
+  while(!feof(severs_file))
+  {
+    fscanf(servers_file, "%s", &buf_str);
+    !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+    
+  }  
+
+  fclose(servers_file);
+
+
 
   // TODO: work continiously, rewrite to make parallel
   for (int i = 0; i < servers_num; i++) {
